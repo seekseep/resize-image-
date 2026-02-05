@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>画像リサイズツール</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    crossorigin="anonymous">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+  <nav class="navbar navbar-dark bg-dark">
+    <div class="container">
+      <span class="navbar-brand">画像リサイズツール</span>
+    </div>
+  </nav>
+
+  <main class="container my-4">
+    <!-- Step 1: 画像を選ぶ -->
+    <div id="step-select">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">1. 画像を選ぶ</h5>
+          <div id="drop-zone" class="border border-2 rounded p-5 text-center">
+            <p>ここに画像をドラッグ＆ドロップ<br>または</p>
+            <label class="btn btn-primary" for="file-input">ファイルを選択</label>
+            <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" class="d-none" multiple>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: 設定する -->
+    <div id="step-settings" class="d-none">
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0">2. 設定する</h5>
+            <button type="button" id="back-to-select" class="btn btn-outline-secondary btn-sm">画像を選び直す</button>
+          </div>
+          <div class="mb-3">
+            <p class="text-muted small mb-2">選択した画像 (<span id="image-count">0</span>枚)</p>
+            <div id="original-preview" class="d-flex flex-wrap gap-2"></div>
+          </div>
+          <hr>
+          <form id="resize-form">
+            <div class="mb-3">
+              <label class="form-label">出力比率</label>
+              <div id="ratio-presets" class="d-flex flex-wrap gap-2 mb-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm ratio-btn"
+                  data-ratio="1:1">1:1</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm ratio-btn"
+                  data-ratio="4:3">4:3</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm ratio-btn"
+                  data-ratio="3:2">3:2</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm ratio-btn"
+                  data-ratio="16:9">16:9</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm ratio-btn"
+                  data-ratio="9:16">9:16</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm ratio-btn"
+                  data-ratio="3:4">3:4</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm ratio-btn"
+                  data-ratio="2:3">2:3</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm ratio-btn active"
+                  data-ratio="custom">カスタム</button>
+              </div>
+              <div class="row g-2" id="custom-ratio-group">
+                <div class="col">
+                  <input type="number" id="ratio-w" class="form-control form-control-sm" min="1" max="100" value="1"
+                    placeholder="横">
+                </div>
+                <div class="col-auto d-flex align-items-center">:</div>
+                <div class="col">
+                  <input type="number" id="ratio-h" class="form-control form-control-sm" min="1" max="100" value="1"
+                    placeholder="縦">
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="input-width" class="form-label">幅 (px)</label>
+              <input type="number" id="input-width" class="form-control" min="1" max="10000">
+              <div class="form-text">高さは比率から自動計算されます</div>
+            </div>
+            <div class="mb-3">
+              <label for="bg-color" class="form-label">背景色</label>
+              <div class="d-flex gap-2 align-items-center">
+                <input type="color" id="bg-color" class="form-control form-control-color" value="#ffffff">
+                <span id="bg-color-hex" class="text-muted small">#ffffff</span>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="output-format" class="form-label">出力形式</label>
+              <select id="output-format" class="form-select">
+                <option value="image/jpeg">JPEG</option>
+                <option value="image/png">PNG</option>
+                <option value="image/webp">WebP</option>
+              </select>
+            </div>
+            <div class="mb-3" id="quality-group">
+              <label for="output-quality" class="form-label">品質: <span id="quality-value">92</span>%</label>
+              <input type="range" id="output-quality" class="form-range" min="1" max="100" value="92">
+            </div>
+            <button type="submit" class="btn btn-success w-100">リサイズ実行</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: 確認・ダウンロード -->
+    <div id="step-result" class="d-none">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0">3. 確認・ダウンロード</h5>
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+              <div class="form-check">
+                <input type="checkbox" id="select-all" class="form-check-input" checked>
+                <label for="select-all" class="form-check-label small">すべて選択</label>
+              </div>
+              <button type="button" id="download-selected" class="btn btn-primary btn-sm">選択をダウンロード</button>
+              <button type="button" id="back-to-settings" class="btn btn-outline-secondary btn-sm">設定に戻る</button>
+              <button type="button" id="reselect-btn" class="btn btn-outline-secondary btn-sm">最初からやり直す</button>
+            </div>
+          </div>
+          <p class="text-muted small mb-3">画像を長押しして保存できます</p>
+          <div id="result-list"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="text-center text-muted py-3 small">
+    <p>すべての処理はブラウザ内で行われます。画像がサーバーに送信されることはありません。</p>
+  </footer>
+
+  <!-- プレビューモーダル -->
+  <div class="modal fade" id="preview-modal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="preview-modal-title"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center p-2">
+          <img id="preview-modal-image" class="img-fluid" alt="プレビュー">
+        </div>
+        <div class="modal-footer">
+          <a id="preview-modal-download" class="btn btn-primary" download>ダウンロード</a>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    crossorigin="anonymous"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+
+</html>
